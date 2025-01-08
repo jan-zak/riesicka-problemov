@@ -17,7 +17,7 @@ Tento projekt je jednoduchý interaktivní diagram **Riešička problémov**, kt
 ## Jak používat
 1. Klonuj tento projekt:
    ```bash
-   git clone https://github.com/tvoje-jmeno/riesicka-problemov.git
+   git clone https://github.com/jan-zak/riesicka-problemov.git
 2. Otevři soubor `index.html` v libovolném prohlížeči.
 3. Procházej jednotlivými uzly klikáním na tlačítka a sleduj výsledek.
 
