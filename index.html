@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Riešička problémov</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap');
+
+body {
+	font-family: 'Baloo 2', cursive;
+	background-color: #f8f9fa;
+}
+
+.title {
+	text-align: center;
+	font-weight: bold;
+	margin: 20px 0;
+}
+
+.diagram-container {
+	position: relative;
+	width: 100%;
+	height: 900px;
+	margin: 10px auto;
+	overflow: hidden; /* Zabrání přetékání šipek */
+}
+
+.node {
+	position: absolute;
+	padding: 10px 20px;
+	background: #fff;
+	border: 2px solid #333;
+	border-radius: 5px;
+	text-align: center;
+	cursor: pointer;
+	transition: transform 0.2s ease;
+    z-index: 1; /* Uzly (a tlačítka) jsou nad šipkami */
+}
+
+#start {
+	left: 50%; /* Horizontální centrování */
+	transform: translateX(-50%); /* Posun o polovinu vlastní šířky */
+}
+
+.arrow {
+	position: absolute;
+	stroke: #333;
+	fill: none;
+    pointer-events: none; /* Zabrání šipkám blokovat kliknutí */
+    z-index: 0; /* Umístí šipky pod uzly */
+}
+
+.highlight {
+	stroke: #007bff;
+	stroke-width: 2;
+}
+
+.button-container {
+	display: flex;
+	justify-content: center;
+	margin-top: 10px;
+}
+
+.button {
+	margin: 0 5px;
+	padding: 5px 10px;
+	font-size: 20px;
+	border: 1px solid #007bff;
+	border-radius: 3px;
+	background-color: #fff;
+	color: #007bff;
+	cursor: pointer;
+	transition: background-color 0.2s, color 0.2s;
+}
+
+.button:hover {
+	background-color: #007bff;
+	color: #fff;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1 class="title">Riešička problémov</h1>
+
+<div class="container diagram-container" id="diagram">
+	<!-- Uzel: Funguje to -->
+	<div class="node" id="start" style="top: 20px; left: 50%;">
+		Funguje to?
+	</div>
+	<!-- Další uzly budou přidány dynamicky -->
+</div>
+
+<script>
+// Definice uzlů a spojů
+const nodes = {
+	start: { 
+		text: "Funguje to?", 
+		fontSize: "40px",
+		x: 50, y: 20, 
+		answers: [
+			{ text: "Ano", next: "nejeb_do_toho" },
+			{ text: "Nie", next: "jebal_jsi_do_toho" }
+		] 
+	},
+	nejeb_do_toho: { 
+		text: "Nejeb do toho!", 
+		fontSize: "20px",
+		x: 25, y: 180,
+		autoNext: "nemas_problem" 
+	},
+	jebal_jsi_do_toho: { 
+		text: "Jebal jsi do toho?", 
+		 fontSize: "20px",
+		x: 60, y: 180, 
+		answers: [
+			{ text: "Ano", next: "ty_jsi_kokot" },
+			{ text: "Nie", next: "budes_pojebany" }
+		] 
+	},
+	ty_jsi_kokot: { 
+		text: "Ty si kokot", 
+		fontSize: "28px",
+		x: 50, y: 340, 
+		autoNext: "vie_o_tom_niekto" 
+	},
+	budes_pojebany: { 
+		text: "Budeš pojebaný?", 
+		fontSize: "20px",
+		x: 70, y: 450,
+		answers: [
+			{ text: "Ano", next: "jsi_v_pici" },
+			{ text: "Nie", next: "vyser_sa_na_to"}
+		]		
+	},
+	vyser_sa_na_to: { 
+		text: "Vyser sa na to", 
+		fontSize: "20px", 
+		x: 71, y: 600,
+		autoNext: "nemas_problem" 
+	},
+	vie_o_tom_niekto: {
+		text: "Vie o tom niekto?",
+		fontSize: "20px",
+		x: 30, y: 340,
+		answers: [
+			{ text: "Nie", next: "skry_to"},
+			{ text: "Ano", next: "jsi_v_pici" }
+		]
+	},
+	skry_to: { 
+		text: "Skri to!", 
+		fontSize: "20px", 
+		x: 25, y: 470,
+		autoNext: "nemas_problem" 
+	},
+	jsi_v_pici: { 
+		text: "Jsi v piči", 
+		fontSize: "40px",
+		x: 45, y: 470,
+		autoNext: "mozes_to_hodit_na_druheho"
+	},
+	mozes_to_hodit_na_druheho: {
+		text: "Možeš to hodit na druhého?",
+		fontSize: "20px",
+		x: 42, y: 600,
+		answers: [
+			{ text: "Nie", next: "jsi_v_pici"},
+			{ text: "Ano", next: "nemas_problem" }
+		]
+	},
+	nemas_problem: { 
+		text: "Nemáš problém", 
+		fontSize: "40px",
+		x: 41, y: 780
+	}
+};
+
+// Vykreslení diagramu
+function renderDiagram() {
+	const container = document.getElementById("diagram");
+
+	for (const [id, node] of Object.entries(nodes)) {
+		const nodeEl = document.createElement("div");
+		nodeEl.className = "node";
+		nodeEl.id = id;
+
+		if (id === "start") {
+			// První uzel: centrování horizontálně
+			nodeEl.style.left = "50%";
+			nodeEl.style.top = `${node.y}px`;
+			nodeEl.style.transform = "translateX(-50%)";
+		} else {
+			// Ostatní uzly: pozice podle x a y
+			nodeEl.style.left = `${node.x}%`;
+			nodeEl.style.top = `${node.y}px`;
+		}
+
+		// Nastavení textu a velikosti písma
+		const fontSize = node.fontSize || "16px"; // Výchozí velikost písma
+		nodeEl.innerHTML = `<div style="font-size: ${fontSize};">${node.text}</div>`;
+
+		// Přidání tlačítek pro odpovědi (pokud existují)
+		if (node.answers) {
+			const buttonsContainer = document.createElement("div");
+			buttonsContainer.className = "button-container";
+
+			node.answers.forEach(answer => {
+				const button = document.createElement("button");
+				button.className = "button";
+				button.innerText = answer.text;
+				button.onclick = function () {
+					handleAnswerClick(answer.next, id, this);
+				};
+				buttonsContainer.appendChild(button);
+			});
+			nodeEl.appendChild(buttonsContainer);
+		}
+
+		// Skrytí všech uzlů kromě startu
+		if (id !== "start") {
+			nodeEl.style.display = "none";
+		}
+
+		container.appendChild(nodeEl);
+	}
+}
+
+// Kliknutí na odpověď
+function handleAnswerClick(nextId, currentId, clickedButton = null) {
+	// Zvýraznění aktuálního uzlu
+	const currentNode = document.getElementById(currentId);
+	currentNode.classList.add("highlight");
+
+	// Zobrazení dalšího uzlu
+	const nextNode = document.getElementById(nextId);
+	if (nextNode) {
+		nextNode.style.display = "block";
+
+		// Vykreslení šipky
+		let arrow;
+		if (clickedButton) {
+			// Šipka vychází z tlačítka
+			arrow = createArrowFromButton(clickedButton, nextNode);
+		} else {
+			// Šipka vychází z celého uzlu
+			arrow = createArrowFromNode(currentNode, nextNode);
+		}
+		document.getElementById("diagram").appendChild(arrow);
+
+		// Pokud další uzel má autoNext, pokračujeme automaticky
+		const nextData = nodes[nextId];
+		if (nextData.autoNext) {
+			setTimeout(() => handleAnswerClick(nextData.autoNext, nextId), 500); // Zpoždění 0.5s pro lepší vizuální přechod
+		}
+	}
+}
+
+// Vytvoření šipky od tlačítka
+function createArrowFromButton(button, toNode) {
+	const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+	svg.className = "arrow";
+
+	// Získání pozic tlačítka a cílového uzlu
+	const buttonRect = button.getBoundingClientRect();
+	const toRect = toNode.getBoundingClientRect();
+	const containerRect = document.getElementById("diagram").getBoundingClientRect();
+
+	// Výpočet středu tlačítka
+	const fromX = buttonRect.left + buttonRect.width / 2 - containerRect.left;
+	const fromY = buttonRect.top + buttonRect.height / 2 - containerRect.top;
+
+	// Výpočet středu cílového uzlu
+	const toCenterX = toRect.left + toRect.width / 2 - containerRect.left;
+	const toCenterY = toRect.top + toRect.height / 2 - containerRect.top;
+
+	// Výpočet směru mezi tlačítkem a cílovým uzlem
+	const deltaX = toCenterX - fromX;
+	const deltaY = toCenterY - fromY;
+
+	// Posun koncového bodu na okraj cílového uzlu
+	const toX = toCenterX - (toRect.width / 2) * (deltaX / Math.sqrt(deltaX ** 2 + deltaY ** 2));
+	const toY = toCenterY - (toRect.height / 2) * (deltaY / Math.sqrt(deltaX ** 2 + deltaY ** 2));
+
+	// Nastavení velikosti SVG podle souřadnic
+	svg.style.position = "absolute";
+	svg.style.left = `${Math.min(fromX, toX)}px`;
+	svg.style.top = `${Math.min(fromY, toY)}px`;
+	svg.setAttribute("width", `${Math.abs(toX - fromX) + 10}px`);
+	svg.setAttribute("height", `${Math.abs(toY - fromY) + 10}px`);
+
+	// Vykreslení cesty šipky
+	const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+	const startX = fromX < toX ? 5 : Math.abs(toX - fromX) + 5;
+	const startY = fromY < toY ? 5 : Math.abs(toY - fromY) + 5;
+	const endX = fromX < toX ? Math.abs(toX - fromX) + 5 : 5;
+	const endY = fromY < toY ? Math.abs(toY - fromY) + 5 : 5;
+
+	path.setAttribute("d", `M${startX},${startY} L${endX},${endY}`);
+	path.setAttribute("stroke", "black");
+	path.setAttribute("stroke-width", "2");
+	path.setAttribute("fill", "none");
+
+	svg.appendChild(path);
+	return svg;
+}
+
+// Vytvoření šipky mezi dvěma uzly
+function createArrowFromNode(fromNode, toNode) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.className = "arrow";
+
+    // Získání pozic uzlů
+    const fromRect = fromNode.getBoundingClientRect();
+    const toRect = toNode.getBoundingClientRect();
+    const containerRect = document.getElementById("diagram").getBoundingClientRect();
+
+    // Středy uzlů
+    const fromCenterX = fromRect.left + fromRect.width / 2 - containerRect.left;
+    const fromCenterY = fromRect.top + fromRect.height / 2 - containerRect.top;
+    const toCenterX = toRect.left + toRect.width / 2 - containerRect.left;
+    const toCenterY = toRect.top + toRect.height / 2 - containerRect.top;
+
+    // Vypočítání kontrolních bodů pro zakřivení (oblouk dolů)
+    const controlPointX = (fromCenterX + toCenterX) / 2; // Střední X
+    const controlPointY = Math.max(fromCenterY, toCenterY) + 50; // Zakřivení směrem dolů
+
+    // Nastavení velikosti SVG podle rozsahu souřadnic
+    svg.style.position = "absolute";
+    svg.style.left = `${Math.min(fromCenterX, toCenterX)}px`;
+    svg.style.top = `${Math.min(fromCenterY, toCenterY)}px`;
+    svg.setAttribute("width", `${Math.abs(toCenterX - fromCenterX) + 10}px`);
+    svg.setAttribute("height", `${Math.abs(toCenterY - fromCenterY) + 60}px`);
+
+    // Vykreslení cesty šipky
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute(
+        "d",
+        `M${fromCenterX - Math.min(fromCenterX, toCenterX) + 5},${fromCenterY -
+            Math.min(fromCenterY, toCenterY)}
+         Q${controlPointX - Math.min(fromCenterX, toCenterX)},${controlPointY -
+            Math.min(fromCenterY, toCenterY)}
+         ${toCenterX - Math.min(fromCenterX, toCenterX) + 5},${toCenterY -
+            Math.min(fromCenterY, toCenterY)}`
+    );
+    path.setAttribute("stroke", "black");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("fill", "none");
+    path.style.pointerEvents = "none"; // Zamezení blokování interakcí
+
+    svg.appendChild(path);
+    return svg;
+}
+
+// Spuštění
+renderDiagram();
+</script>
+
+</body>
+</html>
