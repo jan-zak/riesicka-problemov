@@ -2,7 +2,7 @@
 
 Tento projekt je jednoduchý interaktivní diagram **Riešička problémov**, který nabízí humorný pohled na řešení problémů. Uživatelé mohou procházet jednotlivými rozhodovacími kroky a objevovat, kam je jejich volby zavedou.
 
-![Ukázka diagramu](screenshot.jpg)
+![Ukázka diagramu](screenshots/screenshot.jpg)
 
 ## Funkce
 
